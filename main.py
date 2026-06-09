@@ -44,10 +44,14 @@ def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db:
     # Fallback: Seed admin if startup_event was bypassed by Phusion Passenger
     admin_check = db.query(models.AdminUser).filter(models.AdminUser.username == "admin").first()
     if not admin_check:
-        hashed_pw = auth.get_password_hash("admin123")
-        new_admin = models.AdminUser(username="admin", hashed_password=hashed_pw)
-        db.add(new_admin)
-        db.commit()
+        try:
+            hashed_pw = auth.get_password_hash("admin123")
+            new_admin = models.AdminUser(username="admin", hashed_password=hashed_pw)
+            db.add(new_admin)
+            db.commit()
+        except Exception as e:
+            import traceback
+            raise HTTPException(status_code=400, detail=f"Database or Hashing Error: {str(e)} | Trace: {traceback.format_exc()}")
 
     user = db.query(models.AdminUser).filter(models.AdminUser.username == form_data.username).first()
     if not user or not auth.verify_password(form_data.password, user.hashed_password):
