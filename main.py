@@ -41,6 +41,14 @@ app.add_middleware(
 
 @app.post("/api/auth/login", response_model=schemas.Token, tags=["Auth"])
 def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    # Fallback: Seed admin if startup_event was bypassed by Phusion Passenger
+    admin_check = db.query(models.AdminUser).filter(models.AdminUser.username == "admin").first()
+    if not admin_check:
+        hashed_pw = auth.get_password_hash("admin123")
+        new_admin = models.AdminUser(username="admin", hashed_password=hashed_pw)
+        db.add(new_admin)
+        db.commit()
+
     user = db.query(models.AdminUser).filter(models.AdminUser.username == form_data.username).first()
     if not user or not auth.verify_password(form_data.password, user.hashed_password):
         raise HTTPException(
