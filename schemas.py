@@ -1,5 +1,8 @@
 from pydantic import BaseModel, ConfigDict, computed_field
 from typing import List, Optional
+import os
+
+API_BASE_URL = os.getenv("API_BASE_URL", "https://api.popememorialhss.org")
 
 class Token(BaseModel):
     access_token: str
@@ -16,7 +19,7 @@ class AchievementImage(AchievementImageBase):
     @computed_field
     @property
     def image_url(self) -> str:
-        return f"http://localhost:8000/api/achievements/images/{self.id}/content"
+        return f"{API_BASE_URL}/api/achievements/images/{self.id}/content"
 
 class AchievementBase(BaseModel):
     title: str
@@ -44,7 +47,7 @@ class Circular(CircularBase):
     @computed_field
     @property
     def pdf_url(self) -> str:
-        return f"http://localhost:8000/api/circulars/{self.id}/pdf"
+        return f"{API_BASE_URL}/api/circulars/{self.id}/pdf"
 
 class TeamMemberBase(BaseModel):
     name: str
@@ -61,7 +64,7 @@ class TeamMember(TeamMemberBase):
     @computed_field
     @property
     def image_url(self) -> str:
-        return f"http://localhost:8000/api/teams/{self.id}/image"
+        return f"{API_BASE_URL}/api/teams/{self.id}/image"
 
 class CargoImageBase(BaseModel):
     pass
@@ -74,7 +77,7 @@ class CargoImage(CargoImageBase):
     @computed_field
     @property
     def image_url(self) -> str:
-        return f"http://localhost:8000/api/cargos/images/{self.id}/content"
+        return f"{API_BASE_URL}/api/cargos/images/{self.id}/content"
 
 class CargoCategoryBase(BaseModel):
     name: str
@@ -101,7 +104,7 @@ class Service(ServiceBase):
     @computed_field
     @property
     def image_url(self) -> str:
-        return f"http://localhost:8000/api/services/{self.id}/image"
+        return f"{API_BASE_URL}/api/services/{self.id}/image"
 
 class LicenseBase(BaseModel):
     title: str
@@ -117,7 +120,7 @@ class License(LicenseBase):
     @computed_field
     @property
     def image_url(self) -> str:
-        return f"http://localhost:8000/api/licenses/{self.id}/image"
+        return f"{API_BASE_URL}/api/licenses/{self.id}/image"
 
 class BranchBase(BaseModel):
     title: str
@@ -134,4 +137,4 @@ class Branch(BranchBase):
     @computed_field
     @property
     def image_url(self) -> str:
-        return f"http://localhost:8000/api/branches/{self.id}/image"
+        return f"{API_BASE_URL}/api/branches/{self.id}/image"
