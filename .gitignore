@@ -1,0 +1,4 @@
+.env
+__pycache__/
+cms.db
+*.sqlite3

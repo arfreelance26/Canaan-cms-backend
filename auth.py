@@ -17,6 +17,11 @@ from sqlalchemy.orm import Session
 from database import get_db
 import models
 
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
 # Use a strong default for development, but expect ENV variable in production
 SECRET_KEY = os.getenv("JWT_SECRET_KEY", "canaan_super_secret_key_change_in_production")
 ALGORITHM = "HS256"
