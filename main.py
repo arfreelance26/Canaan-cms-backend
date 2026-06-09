@@ -42,7 +42,7 @@ def startup_event():
         db.close()
 
 # CORS setup
-ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,https://canaan-portfolio.vercel.app", "https://canaan-cms.vercel.app").split(",")
+ALLOWED_ORIGINS = os.getenv("ALLOWED_ORIGINS", "http://localhost:3000,http://127.0.0.1:3000,https://canaan-portfolio.vercel.app,https://canaan-cms.vercel.app").split(",")
 
 app.add_middleware(
     CORSMiddleware,
