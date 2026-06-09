@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Response
+from typing import List
 from sqlalchemy.orm import Session
 from typing import List
 import models, schemas
@@ -39,21 +40,27 @@ def delete_category(category_id: int, db: Session = Depends(get_db), current_use
     db.commit()
     return {"ok": True}
 
-@router.post("/{category_id}/images", response_model=schemas.CargoImage)
-async def upload_cargo_image(category_id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user: models.AdminUser = Depends(auth.get_current_user)):
+@router.post("/{category_id}/images", response_model=List[schemas.CargoImage])
+async def upload_cargo_images(category_id: int, files: List[UploadFile] = File(...), db: Session = Depends(get_db), current_user: models.AdminUser = Depends(auth.get_current_user)):
     db_category = db.query(models.CargoCategory).filter(models.CargoCategory.id == category_id).first()
     if not db_category:
         raise HTTPException(status_code=404, detail="Category not found")
-    contents = await file.read()
-    if len(contents) > 5 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File too large. Maximum 5MB.")
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Invalid file type. Only images allowed.")
-    db_image = models.CargoImage(category_id=category_id, image_blob=contents)
-    db.add(db_image)
+    
+    uploaded_images = []
+    for file in files:
+        contents = await file.read()
+        if len(contents) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="One of the files is too large. Maximum 5MB.")
+        if not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Invalid file type. Only images allowed.")
+        db_image = models.CargoImage(category_id=category_id, image_blob=contents)
+        db.add(db_image)
+        uploaded_images.append(db_image)
+        
     db.commit()
-    db.refresh(db_image)
-    return db_image
+    for img in uploaded_images:
+        db.refresh(img)
+    return uploaded_images
 
 @router.get("/images/{image_id}/content")
 def get_cargo_image_content(image_id: int, db: Session = Depends(get_db)):

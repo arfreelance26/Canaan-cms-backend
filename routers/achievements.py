@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Response
+from typing import List
 from sqlalchemy.orm import Session
 from typing import List
 import models, schemas
@@ -39,22 +40,27 @@ def delete_achievement(achievement_id: int, db: Session = Depends(get_db), curre
     db.commit()
     return {"ok": True}
 
-@router.post("/{achievement_id}/images", response_model=schemas.AchievementImage)
-async def upload_achievement_image(achievement_id: int, file: UploadFile = File(...), db: Session = Depends(get_db), current_user: models.AdminUser = Depends(auth.get_current_user)):
+@router.post("/{achievement_id}/images", response_model=List[schemas.AchievementImage])
+async def upload_achievement_images(achievement_id: int, files: List[UploadFile] = File(...), db: Session = Depends(get_db), current_user: models.AdminUser = Depends(auth.get_current_user)):
     db_achievement = db.query(models.Achievement).filter(models.Achievement.id == achievement_id).first()
     if not db_achievement:
         raise HTTPException(status_code=404, detail="Achievement not found")
     
-    contents = await file.read()
-    if len(contents) > 5 * 1024 * 1024:
-        raise HTTPException(status_code=400, detail="File too large. Maximum 5MB.")
-    if not file.content_type.startswith("image/"):
-        raise HTTPException(status_code=400, detail="Invalid file type. Only images allowed.")
-    db_image = models.AchievementImage(achievement_id=achievement_id, image_blob=contents)
-    db.add(db_image)
+    uploaded_images = []
+    for file in files:
+        contents = await file.read()
+        if len(contents) > 5 * 1024 * 1024:
+            raise HTTPException(status_code=400, detail="One of the files is too large. Maximum 5MB.")
+        if not file.content_type.startswith("image/"):
+            raise HTTPException(status_code=400, detail="Invalid file type. Only images allowed.")
+        db_image = models.AchievementImage(achievement_id=achievement_id, image_blob=contents)
+        db.add(db_image)
+        uploaded_images.append(db_image)
+        
     db.commit()
-    db.refresh(db_image)
-    return db_image
+    for img in uploaded_images:
+        db.refresh(img)
+    return uploaded_images
 
 @router.get("/images/{image_id}/content")
 def get_achievement_image_content(image_id: int, db: Session = Depends(get_db)):
